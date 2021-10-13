@@ -13,6 +13,9 @@
          <!-- Core theme CSS (includes Bootstrap)-->
          <link href="{% static 'css/styles.css' %}" rel="stylesheet" />
          <link href="{% static 'css/style.css' %}" rel="stylesheet" />
+         <!-- Font Awesome CSS -->
+         <script src="https://kit.fontawesome.com/5135d630a7.js" crossorigin="anonymous"></script>
+   
     </head>
     <body>
 
@@ -30,6 +33,8 @@
                             <a class="nav-link active" aria-current="page" href="{% url 'home' %}">Home</a>
                         </li>
                     </ul>
+
+                    
                     <!-- Search form -->
                     <form method="POST" action="{% url 'search' %}">
                         {% csrf_token %}
@@ -39,11 +44,30 @@
                             <input type="submit" id="searchinput" class="btn btn-secondary" value="search">
                         </div>
                     </form>
-                    &nbsp; &nbsp;&nbsp;  
-                    <!-- Profile information -->
+
+                   
                     <form class="d-flex">
                         <!-- checking user is loged in or not -->
                         {% if request.session.name %}
+                        <!-- Notification information -->
+                        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                            <li class="nav-item dropdown notification-section">
+                                <a href="#" class="notification dropdown-toggle" id="navbarDropdown" role="button"
+                                    data-bs-toggle="dropdown" aria-expanded="true">
+                                    <span><i class='fa fa-bell'></i></span>
+                                    <span class="badge" id="notification-badge">0</span>
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="navbarDropdown" id="notifications-dropdown"
+                                    data-popper-placement="bottom-end"
+                                    style="position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate3d(-70px, 42px, 0px);">
+                                    {% for i in notifications %}
+                                    <li class="dropdown-item">{{i.message}}</li>
+                                    <hr class="dropdown-divider">
+                                    {% endfor %}    
+                                </ul>
+                            </li>            
+                        </div>                       
+                        <!-- Profile information -->
                         <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
                             <li class="nav-item dropdown bg-dark">
                                 <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#"  data-bs-toggle="dropdown" aria-expanded="false">
@@ -56,6 +80,7 @@
                                     </li>                    
                                     <li><hr class="dropdown-divider" /></li>
                                     <li><a class="dropdown-item" href="{% url 'viewprofile' %}">View and edit profile</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'messages' %}">Messages</a></li>
                                     <li><a class="dropdown-item" href="{% url 'myposts' %}">My posts</a></li>
                                     <li><a class="dropdown-item" href="{% url 'mypurchases' %}">My purchases</a></li>
                                     <li><a class="dropdown-item" href="{% url 'logout' %}">Logout</a></li>
@@ -189,6 +214,16 @@
                 </div>
             </div>
         </nav>
+
+
+
+        <!-- Notification script -->
+        {{ room_name|json_script:"room-name" }}
+        <script src="{% static 'js/notification.js' %}"></script>
+        
+        
+
+
 
         {% block content %} {% endblock %} 
 

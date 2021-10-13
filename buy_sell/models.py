@@ -8,7 +8,6 @@ class NewUser(models.Model):
     email = models.EmailField(max_length=150)
     phonenumber = models.CharField(max_length=10)
     password = models.CharField(max_length=150)
-    #confirmpassword = models.CharField(max_length=150)
 
     def __str__(self):
         return self.name
@@ -30,7 +29,7 @@ class Product(models.Model):
     price = models.IntegerField(default=0)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, default=1)
     description = models.CharField(max_length=500, default='', null=True, blank=True)
-    image  = models.ImageField(upload_to='images/productimages/')
+    image  = models.ImageField(upload_to='images/productimages/', default='images/niimage.png',null=True, blank=True)
     status = models.CharField(max_length=100, default='sale')
 
 #Model for purchased products
@@ -41,3 +40,10 @@ class MyPurchases(models.Model):
     #category = models.CharField(max_length=50,default='', null=True, blank=True)
     #description = models.CharField(max_length=500, default='', null=True, blank=True)
     image  = models.ImageField(upload_to='images/productimages/', null=True, blank=True)
+
+
+#Model for Notifications
+class Notifications(models.Model):
+    seller_mail_id = models.EmailField(max_length=150)
+    buyer_mail_id = models.EmailField(max_length=150)
+    notifications = models.CharField(max_length=250)

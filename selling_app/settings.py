@@ -31,12 +31,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     #for social login
     'django.contrib.sites',
+    'drf_yasg',
     #New apps
     'buy_sell',
 
-
-    
-    
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -46,6 +44,17 @@ INSTALLED_APPS = [
     #'allauth.socialaccount.providers.facebook',
 
     'crispy_forms',
+
+    'mainapp',
+    'notifications_app',
+    'channels',
+    'django_celery_beat',
+    'django_celery_results',
+    
+    'chat',
+    'rest_api',
+
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -60,6 +69,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'selling_app.urls'
 
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -71,12 +81,16 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+
+
+                'mainapp.custom_context_processors.notifications'
             ],
         },
     },
 ]
 
 WSGI_APPLICATION = 'selling_app.wsgi.application'
+ASGI_APPLICATION = 'selling_app.asgi.application'
 
 
 # Database
@@ -158,7 +172,9 @@ SOCIALACCOUNT_PROVIDERS = {
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
+
+#TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
@@ -207,3 +223,24 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 EMAIL_FROM = config('EMAIL_FROM')
 EMAIL_USE_TLS = True
 
+
+
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
+
+# CELERY SETTINGS
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379'
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_SELERLIZER = 'json'
+CELERY_TIMEZONE = 'Asia/Kolkata'
+
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'

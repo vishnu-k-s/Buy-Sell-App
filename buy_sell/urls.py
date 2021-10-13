@@ -2,15 +2,20 @@
 from django.urls import path,include
 from django.contrib.auth.views import LogoutView
 from django.views.generic.base import TemplateView
-from .views import BuyProduct, BuyProductNow, Index, RegisterPage, Registration, ConfirmRegistration 
-from .views import LoginPage, Login, logout, ForgotpasswordPage, Forgotpassword
-from .views import EditProfile, ViewProfile, ChangePassword, ChangeUsername
-from .views import  CreatePost, MyPosts, Search
-from .views import  productdetails, delete_view, BuyProduct, BuyProductNow, Chat, Purchases, ClearHistory
-from .views import Error
+#from .views import BuyProduct, BuyProductNow, Index, RegisterPage, Registration, ConfirmRegistration 
+#from .views import LoginPage, Login, logout, ForgotpasswordPage, Forgotpassword
+#from .views import EditProfile, ViewProfile, ChangePassword, ChangeUsername
+#from .views import  CreatePost, MyPosts, Search
+#from .views import  productdetails, delete_view, BuyProduct, BuyProductNow, Chat, Purchases, ClearHistory
+#from .views import Error, test
+from .views import *
 urlpatterns = [
    path('', Index.as_view(), name='home'),
   
+   #For ajax urls
+   path('createAccount/', createAccount, name='createaccount'),
+   path('loginajax/', loginajax, name='loginajax'),
+
    path('registrationpage/',  RegisterPage.as_view(), name='registerpage'),
    path('registration/', Registration.as_view(), name='registration'),
    path('confirmregistration/', ConfirmRegistration.as_view(), name='confirmregistration'),
@@ -38,12 +43,19 @@ urlpatterns = [
    path('myposts/<id>', productdetails),#test
 
    path('<id>', productdetails, name='productdetails'),   
-   path('chat/', Chat.as_view(), name='chat'),
+   #path('chat/', Chat.as_view(), name='chat'),
+
+   path('messages/', Messages.as_view(), name='messages'),
+
    path('buyproduct/', BuyProduct.as_view(), name='buyproduct'),
    path('buyproductnow/', BuyProductNow.as_view(), name='buyproductnow'),
    path('mypurchases/', Purchases.as_view(), name='mypurchases'),
    path('clearhistory/', ClearHistory.as_view(), name='clearhistory'),
 
    path('error/', Error.as_view(), name='error'),
+
+
+   #path('home/', views.home, name="homenotification"),
+   path('test/', test, name="test"),
   
 ]

@@ -1,19 +1,26 @@
 
-from django.http import request
+from django.http import request, JsonResponse
 from django.http.response import HttpResponse
 from django.shortcuts import redirect, render
 from django.contrib import messages
 from django.core.mail import  send_mail
 from django.views.generic.base import View, TemplateView
 from .models import NewUser, Product, Category,  MyPurchases
+from notifications_app.models import BroadcastNotification
 from .forms import PostForm
 
 import re
 import random
 import string
 
-#Declaring some global variables
-email=''
+#notification
+from channels.layers import get_channel_layer
+import json
+from asgiref.sync import async_to_sync
+from datetime import datetime
+from django.template import RequestContext
+
+
 
 
 #For rendering index page
@@ -39,10 +46,10 @@ class Index(View):
         data = {}
         data['categories'] = categories
         data['products'] = products
-        #data['posts'] = posts
 
-       
-        return render(request,'buy_sell/index.html',data)
+        data['room_name'] = "broadcast"
+              
+        return render(request,'buy_sell/index.html', data)
 
 
 #For rendering registration page
@@ -124,7 +131,21 @@ class Registration(View):
         except:
             messages.error(request,"Unable to create an account please try again")
             return render(request,'buy_sell/registration.html',values)
-        
+
+def createAccount(request):  #Using ajax
+    username = request.GET['username']
+    name = request.GET['name']
+    email = request.GET['email']
+    phone = request.GET['phone']
+    password = request.GET['password']
+
+    try:
+        NewUser(username=username,name=name,email=email,phonenumber=phone,password=password).save()
+        messages.success(request,"Account created successfully please login")        
+        return HttpResponse('Account created successfully please login') 
+    except:
+        return HttpResponse('Unable to create account please try again')
+
 
 #Create random strings for email verification
 def randomString(stringlength=4):
@@ -171,6 +192,37 @@ class LoginPage(TemplateView):
 
 
 #Login view
+def loginajax(request): #Login using ajax
+    email = request.GET['email']
+    password = request.GET['password']
+
+    try:
+        #Checking email&password exists or not
+        if NewUser.objects.filter(email=email,password=password).exists():          
+            userdetails = NewUser.objects.get(email=email,password=password)
+                
+            #Creating sessions for future purposes
+            request.session['username'] = userdetails.username
+            request.session['name'] = userdetails.name
+            request.session['phonenumber'] = userdetails.phonenumber
+            request.session['email'] = userdetails.email
+            request.session['password'] = userdetails.password
+
+            #Changing value of global variable
+            email = request.session['email']
+                
+            return HttpResponse('Login Sucessful') 
+
+        else:
+            return HttpResponse('Email/Password is invalid') 
+            #messages.error(request, 'Email/Password is invalid')
+            #return render(request, 'buy_sell/login.html') 
+
+    except:
+            return HttpResponse('Email/Password is invalid') 
+            #messages.error(request, 'Email/Password is invalid')
+            #return render(request, 'buy_sell/login.html')
+
 class Login(View):
     def post(self,request):
         email = request.POST['email']
@@ -316,14 +368,28 @@ class ChangeUsername(View):
 
 
 #Create post
-class CreatePost(View):
+class CreatePost(View):    
     def post(self, request):
+        data = {}
         form = PostForm(request.POST, request.FILES)
         
         if form.is_valid():
+            #Getting name of product
+            product_name = form.cleaned_data['name']
+           
             form.save()
+
+            #Updating value in BrodcastNotification table
+            notificationobj = BroadcastNotification(message='A new item : '+ product_name + ' has been added for sale ... ', broadcast_on=datetime.now())
+            notificationobj.sent = True
+            #notification.save()
+            notificationobj.save()
+           
+            data['room_name'] = "broadcast" 
+            data['form'] = form
+
             messages.success(request,"your post has been added sucessfully ")           
-            return render(request, 'user/createpost.html', {'form' : form})
+            return render(request, 'user/createpost.html', data)
 
         else:
             messages.error(request,"something went wrong check entered details and try again...! ")           
@@ -350,6 +416,7 @@ class MyPosts(View):
 #Displaying items individually using detail view  pass id attribute from urls
 def productdetails(request,id):
     context ={}
+    context['room_name'] = "broadcast"
     try :
         #Checks wheather user is loged in or not 
         if request.session['email']:
@@ -366,7 +433,11 @@ def productdetails(request,id):
             request.session['to_address'] = productdetails.owneremail 
             request.session['item_name'] = productdetails.name
             request.session['item_prize'] = productdetails.price
-           
+
+            #Creating sessions for chat
+            request.session['product_ownerusername'] = productdetails.ownerusername
+            context['product_username'] = request.session['product_ownerusername']
+
             return render(request,"buy_sell/productdetails.html", context)
 
     except:
@@ -442,23 +513,27 @@ class BuyProductNow(View):
                 'your purchase for item: ' + request.session['item_name'] + ' for the prize: ' + str(request.session['item_prize']) + ' is successful ',
                 'vishnusajeevks@gmail.com',
                 [request.session['email']],fail_silently=False)
+
             #Changing status of item
             productdetails = Product.objects.get(name=request.session['item_name'])
             productdetails.status='sold'
             productdetails.save()
 
-            print(request.session['email'],productdetails.name,productdetails.price,productdetails.image)
             #Adding product details to mypurchases model
             #obj =MyPurchases(customeremail=request.session['email'], name=productdetails.name, price=productdetails.price, Category=productdetails.category, description=productdetails.description, image=productdetails.image)
             obj =MyPurchases(customeremail=request.session['email'], name=productdetails.name, price=productdetails.price,image=productdetails.image)
             obj.save()           
-            print('saved to database')
             
             #Message for seller
             send_mail('Congratulations Your item has been sold out...',
                 'your item: '+ request.session['item_name'] + ' has been bought by \n' + request.session['name'] +' for the prize of: ' + str(request.session['item_prize']) ,
                 'vishnusajeevks@gmail.com',
                 [request.session['to_address']],fail_silently=False)
+
+            #Updating value in BrodcastNotification table
+            notificationobj = BroadcastNotification(message=' '+ request.session['item_name']+' has been sold out... ')
+            notificationobj.save()
+            
 
             return render(request, 'buy_sell/buyproduct.html')  
         except:
@@ -468,6 +543,13 @@ class BuyProductNow(View):
         return render(request, 'buy_sell/buyproduct.html')
 
 #Chat with user
+class Messages(View):
+    def get(self, request):
+        context = {}
+        context['data'] = request.session['username']
+        return render(request, 'buy_sell/messages.html', context)
+    def post(self, request):
+        return render(request, 'buy_sell/messages.html')
 class Chat(View):
     def get(self, request):
         return render(request, 'buy_sell/chat.html')
@@ -511,3 +593,23 @@ class ClearHistory(View):
 #Error page
 class Error(TemplateView):
     template_name = 'buy_sell/error.html'
+
+
+#Notification
+'''
+def home(request):
+    return render(request, 'mainapp/index.html', {
+        'room_name': "broadcast"
+    })
+
+'''
+def test(request):
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        "notification_broadcast",
+        {
+            'type': 'send_notification',
+            'message': json.dumps("someone wants to speak to u ")
+        }
+    )
+    return HttpResponse("Done")

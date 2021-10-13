@@ -32,7 +32,11 @@
                 <div class="row">
                     <div class="col">
                         <h3>Owner</h3>
-                        <h4>{{ data.ownerusername }}</h4>   
+                        <h4>{{ data.ownerusername }}</h4> 
+                        <!-- For chat functionality -->                        
+                        <input type="hidden"  id="username" value="{{ data.ownerusername }}">
+                        <input type="hidden"  id="username2" value=" {{ product_username }} "> 
+                       
                     </div>
                 </div>
                 <hr>
@@ -45,20 +49,39 @@
                     <!-- Checking status of product -->
                     <!-- if 'sale' show buttons else not show -->
                     {% if data.status == 'sale' %}
-                    <a href="{% url 'chat' %}">
-                        <input class="text-center btn btn-dark" type="button" value="Chat with user" style="width: 103%;">
-                        <br><br>
-                    </a>
-                    <a href="{% url 'buyproductnow' %}">
-                        <input class=" text-center btn btn-dark" type="button" value="Buy" style="width: 103%;">
-                        <br><br>    
-                    </a>
+                    
+                    <div>
+                        <input id="room-name-submit" type="button" class="text-center btn btn-dark" value="Chat with user" style="width: 103%;">       
+                        <a href="{% url 'buyproductnow' %}">
+                            <br>
+                            <input class=" text-center btn btn-dark" type="button" value="Buy" style="width: 103%;">
+                            <br><br>    
+                        </a>
+                    </div>
+                    
                     {% endif %}
 
                     {% endif %}
                 </div>   
             </div>   
-        </div>       
+        </div>   
+        
+
+        <!-- Chat script --> 
+        <script>
+            //var usernam ={{ ownerusername}};
+            var username  = document.getElementById('username').value;
+            document.querySelector('#room-name-submit').onclick = function (e) {
+                window.location.pathname = '/chat/' +  username  + '/';
+                
+            };
+        </script>
+
+        <!-- Notification script -->
+        {{ room_name|json_script:"room-name" }}
+        <script src="{% static 'js/notification.js' %}"></script>
+        
+       
         
         <br><br><br><br>
         <div class="">

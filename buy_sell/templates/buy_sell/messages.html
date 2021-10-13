@@ -1,0 +1,32 @@
+
+
+
+<html>
+    <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+    $(document).ready(function(){
+        var username  = document.getElementById('username').value;
+        window.location.pathname = '/chat/' +  username  + '/';
+
+    });
+    </script>
+    </head>
+    <body>
+        <!-- For chat functionality -->                        
+        <input type="hidden"  id="username" value="{{ data }}">
+    </body>
+    </html>
+
+    
+
+
+<!-- Chat script --> 
+<script>
+    //var usernam ={{ ownerusername}};
+    var username  = document.getElementById('username').value;
+    document.querySelector('#room-name-submit').onclick = function (e) {
+        window.location.pathname = '/chat/' +  username  + '/';
+        
+    };
+</script>
